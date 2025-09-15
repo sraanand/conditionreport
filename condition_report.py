@@ -307,169 +307,196 @@ def generate_summary():
 
 def create_pdf_report():
     """Create a comprehensive PDF report of the delivery check"""
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
-    
-    # Container for the 'Flowable' objects
-    elements = []
-    
-    # Define styles
-    styles = getSampleStyleSheet()
-    title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], 
-                                fontSize=18, spaceAfter=30, alignment=1, textColor=colors.darkblue)
-    heading_style = ParagraphStyle('CustomHeading', parent=styles['Heading2'], 
-                                 fontSize=14, spaceAfter=12, textColor=colors.darkblue)
-    normal_style = styles['Normal']
-    
-    # Title
-    title = Paragraph("FINAL DELIVERY CHECK SHEET", title_style)
-    elements.append(title)
-    elements.append(Spacer(1, 20))
-    
-    # Vehicle Information Section
-    vehicle_info_data = [
-        ['Customer Name:', st.session_state.get('customer_name', 'N/A'), 
-         'Registration:', st.session_state.get('registration', 'N/A')],
-        ['Odometer Reading:', st.session_state.get('odometer_reading', 'N/A'), 
-         'Sale ID:', st.session_state.get('sale_id', 'N/A')]
-    ]
-    
-    vehicle_table = Table(vehicle_info_data, colWidths=[2*inch, 2*inch, 1.5*inch, 1.5*inch])
-    vehicle_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    
-    elements.append(vehicle_table)
-    elements.append(Spacer(1, 20))
-    
-    # Helper function to create check sections
-    def create_check_section(section_name, items, category_prefix):
-        elements.append(Paragraph(section_name, heading_style))
+    try:
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
         
-        section_data = [['Item', 'Status', 'Comments']]
+        # Container for the 'Flowable' objects
+        elements = []
         
-        for item in items:
-            key_name = f"{category_prefix}_{item.replace(' ', '_').replace('/', '_').replace('(', '').replace(')', '').lower()}"
-            check_key = f"check_{key_name}"
-            comment_key = f"comment_{key_name}"
-            
-            status = "✓ COMPLETED" if st.session_state.get(check_key, False) else "○ PENDING"
-            comment = st.session_state.get(comment_key, '') or '-'
-            
-            section_data.append([item, status, comment])
+        # Define styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], 
+                                    fontSize=18, spaceAfter=30, alignment=1, textColor=colors.darkblue)
+        heading_style = ParagraphStyle('CustomHeading', parent=styles['Heading2'], 
+                                     fontSize=14, spaceAfter=12, textColor=colors.darkblue)
+        normal_style = styles['Normal']
         
-        section_table = Table(section_data, colWidths=[3*inch, 1.5*inch, 2.5*inch])
-        section_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        # Title
+        title = Paragraph("FINAL DELIVERY CHECK SHEET", title_style)
+        elements.append(title)
+        elements.append(Spacer(1, 20))
+        
+        # Vehicle Information Section
+        vehicle_info_data = [
+            ['Customer Name:', st.session_state.get('customer_name', 'N/A'), 
+             'Registration:', st.session_state.get('registration', 'N/A')],
+            ['Odometer Reading:', st.session_state.get('odometer_reading', 'N/A'), 
+             'Sale ID:', st.session_state.get('sale_id', 'N/A')]
+        ]
+        
+        vehicle_table = Table(vehicle_info_data, colWidths=[2*inch, 2*inch, 1.5*inch, 1.5*inch])
+        vehicle_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP')
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
         
-        elements.append(section_table)
+        elements.append(vehicle_table)
+        elements.append(Spacer(1, 20))
+        
+        # Helper function to create check sections
+        def create_check_section(section_name, items, category_prefix):
+            elements.append(Paragraph(section_name, heading_style))
+            
+            section_data = [['Item', 'Status', 'Comments']]
+            
+            for item in items:
+                # Clean the item name for the key
+                clean_item = item.replace(' ', '_').replace('/', '_').replace('(', '').replace(')', '').replace('-', '_').lower()
+                key_name = f"{category_prefix}_{clean_item}"
+                check_key = f"check_{key_name}"
+                comment_key = f"comment_{key_name}"
+                
+                status = "✓ COMPLETED" if st.session_state.get(check_key, False) else "○ PENDING"
+                comment = st.session_state.get(comment_key, '') or '-'
+                
+                # Truncate long comments for PDF
+                if len(comment) > 50:
+                    comment = comment[:47] + "..."
+                
+                section_data.append([item, status, comment])
+            
+            section_table = Table(section_data, colWidths=[3*inch, 1.5*inch, 2.5*inch])
+            section_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP')
+            ]))
+            
+            elements.append(section_table)
+            elements.append(Spacer(1, 15))
+        
+        # Important Checks
+        important_checks = [
+            "Customer Requests Completed",
+            "Quality Control Check Passed", 
+            "Service Completed (if applicable)",
+            "Roadworthy Check Completed"
+        ]
+        create_check_section("IMPORTANT CHECKS", important_checks, "important")
+        
+        # Documentation
+        documentation_items = [
+            "Registration Papers",
+            "Roadworthy Certificate",
+            "Contract Signed / Invoice Received",
+            "User Manual (if applicable)",
+            "Service History (if available)",
+            "Diagnostic Report (if applicable)",
+            "Battery Test Report"
+        ]
+        create_check_section("DOCUMENTATION", documentation_items, "documentation")
+        
+        # Final Inspection
+        inspection_items = [
+            "Paintwork & Panels",
+            "Windscreen & Windows",
+            "Tyres & Wheels",
+            "Lights & Indicators",
+            "Interior Trim",
+            "Boot area",
+            "Infotainment/Dashboard Warning Lights",
+            "Keys (Count & Battery Status)",
+            "Seat/Boot Mats (if applicable)"
+        ]
+        create_check_section("FINAL INSPECTION", inspection_items, "inspection")
+        
+        # Customer Acceptance
+        elements.append(Paragraph("CUSTOMER ACCEPTANCE", heading_style))
+        
+        acceptance_text = """I have reviewed this document and accept the vehicle in its described condition. 
+        I also understand that should the vehicle be returned, it must be returned in the same condition it was accepted in."""
+        
+        elements.append(Paragraph(acceptance_text, normal_style))
         elements.append(Spacer(1, 15))
-    
-    # Important Checks
-    important_checks = [
-        "Customer Requests Completed",
-        "Quality Control Check Passed", 
-        "Service Completed (if applicable)",
-        "Roadworthy Check Completed"
-    ]
-    create_check_section("IMPORTANT CHECKS", important_checks, "important")
-    
-    # Documentation
-    documentation_items = [
-        "Registration Papers",
-        "Roadworthy Certificate",
-        "Contract Signed / Invoice Received",
-        "User Manual (if applicable)",
-        "Service History (if available)",
-        "Diagnostic Report (if applicable)",
-        "Battery Test Report"
-    ]
-    create_check_section("DOCUMENTATION", documentation_items, "documentation")
-    
-    # Final Inspection
-    inspection_items = [
-        "Paintwork & Panels",
-        "Windscreen & Windows",
-        "Tyres & Wheels",
-        "Lights & Indicators",
-        "Interior Trim",
-        "Boot area",
-        "Infotainment/Dashboard Warning Lights",
-        "Keys (Count & Battery Status)",
-        "Seat/Boot Mats (if applicable)"
-    ]
-    create_check_section("FINAL INSPECTION", inspection_items, "inspection")
-    
-    # Customer Acceptance
-    elements.append(Paragraph("CUSTOMER ACCEPTANCE", heading_style))
-    
-    acceptance_text = """I have reviewed this document and accept the vehicle in its described condition. 
-    I also understand that should the vehicle be returned, it must be returned in the same condition it was accepted in."""
-    
-    elements.append(Paragraph(acceptance_text, normal_style))
-    elements.append(Spacer(1, 15))
-    
-    # Signatures
-    signature_data = [
-        ['Time & Date:', st.session_state.get('time_date', 'N/A')],
-        ['Customer Signature:', st.session_state.get('customer_signature', 'N/A')],
-        ['Cars24 Specialist Signature:', st.session_state.get('specialist_signature', 'N/A')]
-    ]
-    
-    signature_table = Table(signature_data, colWidths=[2.5*inch, 4*inch])
-    signature_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    
-    elements.append(signature_table)
-    elements.append(Spacer(1, 20))
-    
-    # Summary Statistics
-    all_checks = [key for key in st.session_state.keys() if key.startswith('check_')]
-    completed_checks = [key for key in all_checks if st.session_state.get(key, False)]
-    completion_rate = (len(completed_checks) / len(all_checks) * 100) if all_checks else 0
-    
-    summary_text = f"""
-    <b>COMPLETION SUMMARY:</b><br/>
-    Total Items: {len(all_checks)}<br/>
-    Completed Items: {len(completed_checks)}<br/>
-    Completion Rate: {completion_rate:.1f}%<br/>
-    Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-    """
-    
-    elements.append(Paragraph(summary_text, normal_style))
-    
-    # Build PDF
-    doc.build(elements)
-    
-    # Get the value of the BytesIO buffer and return it
-    pdf_data = buffer.getvalue()
-    buffer.close()
-    
-    return pdf_data
+        
+        # Signatures
+        signature_data = [
+            ['Time & Date:', st.session_state.get('time_date', 'N/A')],
+            ['Customer Signature:', st.session_state.get('customer_signature', 'N/A')],
+            ['Cars24 Specialist Signature:', st.session_state.get('specialist_signature', 'N/A')]
+        ]
+        
+        signature_table = Table(signature_data, colWidths=[2.5*inch, 4*inch])
+        signature_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        elements.append(signature_table)
+        elements.append(Spacer(1, 20))
+        
+        # Summary Statistics
+        all_checks = [key for key in st.session_state.keys() if key.startswith('check_')]
+        completed_checks = [key for key in all_checks if st.session_state.get(key, False)]
+        completion_rate = (len(completed_checks) / len(all_checks) * 100) if all_checks else 0
+        
+        summary_text = f"""
+        <b>COMPLETION SUMMARY:</b><br/>
+        Total Items: {len(all_checks)}<br/>
+        Completed Items: {len(completed_checks)}<br/>
+        Completion Rate: {completion_rate:.1f}%<br/>
+        Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+        """
+        
+        elements.append(Paragraph(summary_text, normal_style))
+        
+        # Build PDF
+        doc.build(elements)
+        
+        # Get the value of the BytesIO buffer and return it
+        pdf_data = buffer.getvalue()
+        buffer.close()
+        
+        return pdf_data
+        
+    except Exception as e:
+        # If PDF generation fails, create a simple error PDF
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        styles = getSampleStyleSheet()
+        
+        error_content = [
+            Paragraph("PDF Generation Error", styles['Title']),
+            Spacer(1, 20),
+            Paragraph(f"Error: {str(e)}", styles['Normal']),
+            Spacer(1, 20),
+            Paragraph("Please try again or contact support.", styles['Normal'])
+        ]
+        
+        doc.build(error_content)
+        pdf_data = buffer.getvalue()
+        buffer.close()
+        
+        return pdf_data
 
 if __name__ == "__main__":
     main()
