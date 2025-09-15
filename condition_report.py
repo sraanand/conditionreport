@@ -93,4 +93,6 @@ def build_delivery_check_sheet():
 
 if __name__ == "__main__":
     doc = build_delivery_check_sheet()
-    out_name = f"_
+    out_name = f"Final_Delivery_Check_Sheet_{datetime.now().strftime('%Y-%m-%d')}.docx"
+    doc.save(out_name)
+    print("Generated:", out_name)
