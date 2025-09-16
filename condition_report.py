@@ -20,12 +20,15 @@ import tempfile
 from pathlib import Path
 
 import streamlit as st
+import sys
 
 
 # ------------------------- Helpers -------------------------
 
 def _convert_with_docx2pdf(in_path, out_path):
     """Convert with docx2pdf (MS Word). Returns (ok: bool, err: str|None)."""
+    if sys.platform != "darwin":
+        return False, "Skipping docx2pdf on non-macOS (requires Microsoft Word)."
     try:
         from docx2pdf import convert  # type: ignore
     except Exception as e:
@@ -45,16 +48,17 @@ def _convert_with_docx2pdf(in_path, out_path):
 
 
 def _find_soffice():
-    """Best-effort locate LibreOffice 'soffice' on macOS."""
-    # 1) PATH
-    exe = shutil.which("soffice")
-    if exe:
-        return exe
-    # 2) Common macOS locations
+    import shutil
+    # Try both soffice and lowriter
+    for name in ("soffice", "lowriter"):
+        p = shutil.which(name)
+        if p:
+            return p
+    # Common install paths (Linux + macOS)
     candidates = [
+        "/usr/bin/soffice", "/usr/local/bin/soffice", "/opt/homebrew/bin/soffice",
+        "/snap/bin/libreoffice", "/usr/bin/lowriter",
         "/Applications/LibreOffice.app/Contents/MacOS/soffice",
-        "/usr/local/bin/soffice",
-        "/opt/homebrew/bin/soffice",
     ]
     for c in candidates:
         if Path(c).exists():
