@@ -8,3 +8,4 @@ Datetime
 python-docx
 docling>=2.52.0
 reportlab>=4.2.5
+docx2pdf
